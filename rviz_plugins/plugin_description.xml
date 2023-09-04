@@ -1,0 +1,6 @@
+<library path="lib/librviz_plugins">
+  <class name="rviz_plugins/StateTriggerPanel"
+         type="rviz_plugins::StateTriggerPanel"
+         base_class_type="rviz::Panel">
+  </class>
+</library>

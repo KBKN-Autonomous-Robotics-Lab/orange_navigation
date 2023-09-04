@@ -109,6 +109,10 @@ void WaypointsSaver::addWaypointMarker(Waypoint point)
     marker.pose.position.x = point.x;
     marker.pose.position.y = point.y;
     marker.pose.position.z = scale/2;
+    marker.pose.orientation.x = 0;
+    marker.pose.orientation.y = 0;
+    marker.pose.orientation.z = 0;
+    marker.pose.orientation.w = 1;
     marker.scale.x = scale;
     marker.scale.y = scale;
     marker.scale.z = scale;

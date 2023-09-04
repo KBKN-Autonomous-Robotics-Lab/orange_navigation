@@ -125,4 +125,5 @@ if __name__ == '__main__':
     tandem_manager = TandemManager()
     if (len(tandem_manager.tandem_start_list) == 0):
         rospy.logwarn("Shut down " + NODE_NAME)
-    rospy.spin()
+    else:
+        rospy.spin()

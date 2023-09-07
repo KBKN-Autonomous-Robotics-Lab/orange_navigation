@@ -36,7 +36,7 @@
 
     <node name="tandem_run_manager" pkg="waypoint_navigation" type="tandem_run_manager.py" output="screen">
         <param name="waypoints_file" value="$(arg waypoints_file)"/>
-        <rosparam file="$(arg costmaps_file)"/>
+        <rosparam file="$(arg costmaps_file)" command="load"/>
 
         <remap from="scan" to="$(arg tandem_scan)"/>
     </node>

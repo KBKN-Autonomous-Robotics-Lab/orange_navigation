@@ -1,0 +1,3 @@
+.vscode/*
+waypoint_manager/venv
+waypoint_manager/lib/__pycache__

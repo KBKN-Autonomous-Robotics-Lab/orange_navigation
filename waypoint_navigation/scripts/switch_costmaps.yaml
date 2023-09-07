@@ -1,0 +1,2 @@
+switch_costmap: ["/move_base/global_costmap/obstacle_layer1",
+                 "/move_base/global_costmap/obstacle_layer2"]

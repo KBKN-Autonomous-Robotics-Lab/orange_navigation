@@ -33,8 +33,10 @@ class TandemManager():
         self.stop_nav = rospy.ServiceProxy("/stop_wp_nav", Trigger)
         self.resume_nav = rospy.ServiceProxy("/resume_nav", Trigger)
         ## Dynamic reconfigure clients
-        self.costmap_client1 = dynamic_reconfigure.client.Client("/move_base/global_costmap/obstacle_layer1")
-        self.costmap_client2 = dynamic_reconfigure.client.Client("/move_base/global_costmap/obstacle_layer2")
+        costmap_names = rospy.get_param(NODE_NAME+"/switch_costmap")
+        self.clients = []
+        for name in costmap_names:
+            self.clients.append(dynamic_reconfigure.client.Client(name))
         ## Variable
         self.front_angle = 20 # degree
         self.danger_dist = 1.0 # meter
@@ -113,8 +115,9 @@ class TandemManager():
     
     
     def update_costmap_config(self, enable: bool):
-        self.costmap_client1.update_configuration({"enabled": enable})
-        self.costmap_client2.update_configuration({"enabled": enable})
+        if len(self.clients) > 0:
+            for client in self.clients:
+                client.update_configuration({"enabled": enable})
         return
 
 

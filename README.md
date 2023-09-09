@@ -16,3 +16,7 @@ $ source venv/bin/active
 (venv) $ pip install -r requirements.txt
 (venv) $ deactivate
 ```
+4. With ubuntu, it is recommended to register for alias
+```
+$ echo "alias waypoint_manager='path/to/orange_navigation/waypoint_manager/run_app.sh'" >> ~/.bashrc
+```

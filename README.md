@@ -1,12 +1,12 @@
 # orange_navigation
-This repository provides ROS packages to support waypoint navigation and a Python project for editing waypoints, mainly for Tsukuba Challenge.
+This repository provides ROS2 humble packages to support waypoint navigation and a Python project for editing waypoints, mainly for Tsukuba Challenge.
 
 ## Setup
 1. Clone this repository into src directory of ROS workspace
 2. Install waypoint_navigation package dependencies
 ```
 $ rosdep install -r -y -i --from-paths .
-$ catkin build
+$ colcon build
 ```
 3. Create environment for waypoint_manager
 ```

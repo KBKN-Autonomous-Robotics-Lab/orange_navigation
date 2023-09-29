@@ -1,14 +1,8 @@
 # orange_navigation
-This repository provides ROS2 humble packages to support waypoint navigation and a Python project for editing waypoints, mainly for Tsukuba Challenge.
+This branch provides the setup for using the waypoint editing application in ROS2.
 
 ## Setup
-1. Clone this repository into src directory of ROS workspace
-2. Install waypoint_navigation package dependencies
-```
-$ rosdep install -r -y -i --from-paths .
-$ colcon build
-```
-3. Create environment for waypoint_manager
+1.Create environment for waypoint_manager
 ```
 $ cd waypoint_manager
 $ python3 -m venv venv
@@ -16,7 +10,7 @@ $ source venv/bin/active
 (venv) $ pip install -r requirements.txt
 (venv) $ deactivate
 ```
-4. With ubuntu, it is recommended to register for alias
+2. With ubuntu, it is recommended to register for alias
 ```
-$ echo "alias waypoint_manager='path/to/orange_navigation/waypoint_manager/run_app.sh'" >> ~/.bashrc
+$ echo "alias waypoint_manager='/home/ubuntu/ros2_ws/src/orange_navigation/waypoint_manager/run_app.sh'" >> ~/.bashrc
 ```

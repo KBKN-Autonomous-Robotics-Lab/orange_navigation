@@ -1,5 +1,5 @@
 # orange_navigation
-This branch provides the setup for using the waypoint editing application in ROS2.
+This branch provides the setup for using the waypoint editing application.
 
 ## Setup
 1.Create environment for waypoint_manager

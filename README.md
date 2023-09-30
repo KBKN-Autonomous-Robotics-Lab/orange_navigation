@@ -12,5 +12,5 @@ $ source venv/bin/active
 ```
 2. With ubuntu, it is recommended to register for alias
 ```
-$ echo "alias waypoint_manager='/home/ubuntu/ros2_ws/src/orange_navigation/waypoint_manager/run_app.sh'" >> ~/.bashrc
+$ echo "alias waypoint_manager='path/to/orange_navigation/waypoint_manager/run_app.sh'" >> ~/.bashrc
 ```

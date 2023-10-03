@@ -12,6 +12,8 @@
     <arg name="min_yaw_err"        default="0.3"/>
     <arg name="costmaps_file"      default="$(find waypoint_navigation)/scripts/switch_costmaps.yaml"/>
     <arg name="tandem_scan"        default="scan"/>
+    <arg name="use_angle"          default="20"/>
+    <arg name="danger_dist"        default="1.0"/>
 
 
     <node name="waypoint_nav" pkg="waypoint_navigation" type="waypoint_nav" output="screen">
@@ -36,6 +38,8 @@
 
     <node name="tandem_run_manager" pkg="waypoint_navigation" type="tandem_run_manager.py" output="screen">
         <param name="waypoints_file" value="$(arg waypoints_file)"/>
+        <param name="use_angle"      value="$(arg use_angle)"/>
+        <param name="danger_dist"    value="$(arg danger_dist)"/>
         <rosparam file="$(arg costmaps_file)" command="load"/>
 
         <remap from="scan" to="$(arg tandem_scan)"/>

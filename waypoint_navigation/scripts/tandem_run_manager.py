@@ -33,13 +33,13 @@ class TandemManager():
         self.stop_nav = rospy.ServiceProxy("/stop_wp_nav", Trigger)
         self.resume_nav = rospy.ServiceProxy("/resume_nav", Trigger)
         ## Dynamic reconfigure clients
-        costmap_names = rospy.get_param(NODE_NAME+"/switch_costmap")
+        costmap_names = rospy.get_param(NODE_NAME+"/switch_costmap", [])
         self.clients = []
         for name in costmap_names:
             self.clients.append(dynamic_reconfigure.client.Client(name))
         ## Variable
-        self.front_angle = 20 # degree
-        self.danger_dist = 1.0 # meter
+        self.front_angle = rospy.get_param(NODE_NAME+"/use_angle", 20) # degree
+        self.danger_dist = rospy.get_param(NODE_NAME+"/danger_dist", 1.0) # meter
         self.waypoint_num = 0
         self.front_range = None
         self.in_tandem_area = False

@@ -17,7 +17,6 @@
 
 #include <class_loader/class_loader.hpp>
 
-
 class QPushButton;
 
 namespace rviz2_plugins
@@ -25,25 +24,25 @@ namespace rviz2_plugins
 
 class StateTriggerPanel : public rviz_common::Panel
 {
-Q_OBJECT
+  Q_OBJECT
 public:
-    StateTriggerPanel(QWidget* parent = nullptr);
-    virtual ~StateTriggerPanel();
+  StateTriggerPanel(QWidget* parent = nullptr);
+  virtual ~StateTriggerPanel();
 
-    virtual void load(const rviz_common::Config& config);
-    virtual void save(rviz_common::Config config) const;
+  virtual void load(const rviz_common::Config& config);
+  virtual void save(rviz_common::Config config) const;
 
 public Q_SLOTS:
-    void pushStartNavigation();
-    void pushResumeNavigation();
+  void pushStartNavigation();
+  void pushResumeNavigation();
 
 private:
-    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr start_client_;
-    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr resume_client_;
-    QPushButton *start_nav_button_;
-    QPushButton *resume_nav_button_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr start_client_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr resume_client_;
+  QPushButton* start_nav_button_;
+  QPushButton* resume_nav_button_;
 
-    rclcpp::Node::SharedPtr node_;
+  rclcpp::Node::SharedPtr node_;
 };
 
 }  // namespace rviz2_plugins

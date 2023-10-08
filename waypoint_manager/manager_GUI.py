@@ -801,7 +801,7 @@ class Application(tk.Frame):
     +++++ Callback function when right-click and click "add waypoint here" in pop-up menu +++++
     """
     def add_waypoint_here(self):
-        if (self.wp_info_win is not None) and (self.wp_nfo_win.winfo_exists()):
+        if (self.wp_info_win is not None) and (self.wp_info_win.winfo_exists()):
             self.close_wp_info()
         img_x, img_y = self.right_click_coord
         if self.mymap.pil_img.getpixel((img_x, img_y))[0] == 0:

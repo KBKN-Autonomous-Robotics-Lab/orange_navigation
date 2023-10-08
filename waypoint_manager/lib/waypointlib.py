@@ -99,13 +99,26 @@ def get_waypoint_yaml(waypoints: WaypointList, finish_pose: FinishPose):
         s.append("}" + "\n")
 
     s.append("finish_pose:" + "\n")
-    seq, stamp, frame = (finish_pose.header["seq"], finish_pose.header["stamp"], finish_pose.header["frame_id"])
-    s.append("  header: {" + "seq: {}, stamp: {}, frame_id: {}".format(seq, stamp, frame) + "}" + "\n")
+    seq, stamp, frame = (
+        finish_pose.header["seq"],
+        finish_pose.header["stamp"],
+        finish_pose.header["frame_id"],
+    )
+    s.append(
+        "  header: {"
+        + "seq: {}, stamp: {}, frame_id: {}".format(seq, stamp, frame)
+        + "}"
+        + "\n"
+    )
     s.append("  pose:" + "\n")
     x = finish_pose.x
     y = finish_pose.y
     z = finish_pose.position["z"]
     s.append("    position: {" + "x: {}, y: {}, z: {}".format(x, y, z) + "}" + "\n")
     q = quaternion.from_euler_angles([0, 0, finish_pose.yaw])
-    s.append("    orientation: {" + "x: {}, y: {}, z: {}, w: {}".format(q.x, q.y, q.z, q.w) + "}")
+    s.append(
+        "    orientation: {"
+        + "x: {}, y: {}, z: {}, w: {}".format(q.x, q.y, q.z, q.w)
+        + "}"
+    )
     return "".join(s)

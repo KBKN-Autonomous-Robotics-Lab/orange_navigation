@@ -13,7 +13,10 @@ class MyMap:
         self.tk_img = ImageTk.PhotoImage(self.pil_img)
         self.origin = map_yaml["origin"]
         self.resolution = map_yaml["resolution"]
-        self.img_origin = [-self.origin[0] / self.resolution, self.origin[1] / self.resolution + self.height()]
+        self.img_origin = [
+            -self.origin[0] / self.resolution,
+            self.origin[1] / self.resolution + self.height(),
+        ]
         self.mat_affine = np.eye(3)
         return
 
@@ -38,7 +41,11 @@ class MyMap:
     def get_draw_image(self, canvas_size):
         mat_inv = np.linalg.inv(self.mat_affine)
         img = self.pil_img.transform(
-            canvas_size, Image.Transform.AFFINE, tuple(mat_inv.flatten()), Image.Resampling.NEAREST, fillcolor="#0000"
+            canvas_size,
+            Image.Transform.AFFINE,
+            tuple(mat_inv.flatten()),
+            Image.Resampling.NEAREST,
+            fillcolor="#0000",
         )
         self.tk_img = ImageTk.PhotoImage(image=img)
         return self.tk_img

@@ -8,22 +8,19 @@
 #include <vector>
 #include "waypoint_navigation/waypoint.h"
 
-
 using namespace std::chrono_literals;
-
 
 class WaypointsNavigation : public rclcpp::Node
 {
 public:
-    WaypointsNavigation();
-    bool readFile();
-    void run();
+  WaypointsNavigation();
+  bool readFile();
+  void run();
 
 private:
-    rclcpp::TimerBase::SharedPtr timer_;
-    std::vector<Waypoint> waypoint_list_;
-    geometry_msgs::msg::PoseArray pose_array_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  std::vector<Waypoint> waypoint_list_;
+  geometry_msgs::msg::PoseArray pose_array_;
 
-    bool contains(const YAML::Node &node, const std::string &key);
-    
+  bool contains(const YAML::Node& node, const std::string& key);
 };

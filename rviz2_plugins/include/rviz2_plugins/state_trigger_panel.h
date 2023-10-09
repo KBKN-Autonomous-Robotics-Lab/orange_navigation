@@ -27,10 +27,10 @@ class StateTriggerPanel : public rviz_common::Panel
   Q_OBJECT
 public:
   StateTriggerPanel(QWidget* parent = nullptr);
-  virtual ~StateTriggerPanel();
+  ~StateTriggerPanel() override;
 
-  virtual void load(const rviz_common::Config& config);
-  virtual void save(rviz_common::Config config) const;
+  void load(const rviz_common::Config& config) override;
+  void save(rviz_common::Config config) const override;
 
 public Q_SLOTS:
   void pushStartNavigation();

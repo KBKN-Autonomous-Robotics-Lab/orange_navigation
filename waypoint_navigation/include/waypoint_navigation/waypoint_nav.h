@@ -23,5 +23,7 @@ private:
     rclcpp::TimerBase::SharedPtr timer_;
     std::vector<Waypoint> waypoint_list_;
     geometry_msgs::msg::PoseArray pose_array_;
+
+    bool contains(const YAML::Node &node, const std::string &key);
     
 };

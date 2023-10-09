@@ -8,8 +8,10 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
@@ -21,8 +23,10 @@ include_directories(
 add_executable(waypoint_nav src/waypoint_nav.cpp)
 ament_target_dependencies(waypoint_nav
   rclcpp
+  rclcpp_action
   geometry_msgs
   tf2_geometry_msgs
+  nav2_msgs
   std_srvs
   yaml-cpp
 )

@@ -22,20 +22,29 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), has_activate_
   setWpOrientation();
 
   // Publisher
-  wp_vis_pub_ = this->create_publisher<PoseArray>("~/waypoints", 10);
+  wp_vis_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("~/waypoints", 10);
 
   // Service
-  start_server_ = create_service<Trigger>("start_wp_nav", std::bind(&WaypointsNavigation::startNavCallback, this,
-                                                                    std::placeholders::_1, std::placeholders::_2));
-  resume_server_ = create_service<Trigger>("resume_nav", std::bind(&WaypointsNavigation::resumeNavCallback, this,
-                                                                   std::placeholders::_1, std::placeholders::_2));
+  start_server_ = create_service<std_srvs::srv::Trigger>(
+      "start_wp_nav", std::bind(&WaypointsNavigation::startNavCallback, this, _1, _2));
+  resume_server_ = create_service<std_srvs::srv::Trigger>(
+      "resume_nav", std::bind(&WaypointsNavigation::resumeNavCallback, this, _1, _2));
+
+  // Nav2 action
+  client_ptr_ = rclcpp_action::create_client<NavToPose>(this, "navigate_to_pose");
+  send_goal_opts_.goal_response_callback = std::bind(&WaypointsNavigation::responseCallback, this, _1);
+  send_goal_opts_.feedback_callback = std::bind(&WaypointsNavigation::feedbackCallback, this, _1, _2);
+  send_goal_opts_.result_callback = std::bind(&WaypointsNavigation::resultCallback, this, _1);
 
   // Main loop runs at 10hz
-  timer_ = this->create_wall_timer(1000ms, std::bind(&WaypointsNavigation::run, this));
+  timer_ = this->create_wall_timer(1000ms, std::bind(&WaypointsNavigation::exec_loop, this));
+  waitActionServer();
+  RCLCPP_INFO(this->get_logger(), "Successfully connected to server");
+  RCLCPP_INFO(this->get_logger(), "Waiting for waypoint navigation to start");
 }
 
-bool WaypointsNavigation::startNavCallback(const std::shared_ptr<Trigger::Request>,
-                                           std::shared_ptr<Trigger::Response> responce)
+bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+                                           std::shared_ptr<std_srvs::srv::Trigger::Response> responce)
 {
   if (has_activate_ || (current_wp_ != pose_array_.poses.begin()))
   {
@@ -43,13 +52,14 @@ bool WaypointsNavigation::startNavCallback(const std::shared_ptr<Trigger::Reques
     responce->success = false;
     return false;
   }
+  RCLCPP_INFO(this->get_logger(), "Navigation is started now");
   has_activate_ = true;
   responce->success = true;
   return true;
 }
 
-bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<Trigger::Request>,
-                                            std::shared_ptr<Trigger::Response> responce)
+bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+                                            std::shared_ptr<std_srvs::srv::Trigger::Response> responce)
 {
   if (has_activate_)
   {
@@ -58,11 +68,24 @@ bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<Trigger::Reque
   }
   else
   {
-    RCLCPP_WARN(this->get_logger(), "Navigation has resumed");
+    RCLCPP_INFO(this->get_logger(), "Navigation has resumed");
     responce->success = true;
     has_activate_ = true;
   }
   return true;
+}
+
+void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr future)
+{
+}
+
+void WaypointsNavigation::feedbackCallback(GoalHandleNavToPose::SharedPtr,
+                                           const std::shared_ptr<const NavToPose::Feedback> feedback)
+{
+}
+
+void WaypointsNavigation::resultCallback(const GoalHandleNavToPose::WrappedResult& result)
+{
 }
 
 bool WaypointsNavigation::readFile(const std::string& wp_file_path)
@@ -83,7 +106,7 @@ bool WaypointsNavigation::readFile(const std::string& wp_file_path)
   size_t num_wp = wp_node.size();
   if (num_wp == 0)
   {
-    RCLCPP_ERROR(this->get_logger(), "No points in \"waypoints\".");
+    RCLCPP_ERROR(this->get_logger(), "No points in \"waypoints\"");
     return false;
   }
   waypoint_list_.resize(num_wp + 1);
@@ -155,9 +178,43 @@ void WaypointsNavigation::setWpOrientation()
   pose_array_.header.frame_id = world_frame_;
 }
 
-void WaypointsNavigation::run()
+void WaypointsNavigation::waitActionServer()
 {
-  // RCLCPP_INFO(this->get_logger(), "Waiting for action server...");
+  while (rclcpp::ok() && (!client_ptr_->wait_for_action_server(5s)))
+  {
+    RCLCPP_INFO(this->get_logger(), "Waiting for action server...");
+    rclcpp::sleep_for(1s);
+  }
+}
+
+void WaypointsNavigation::sendGoal(const geometry_msgs::msg::Pose& goal_pose)
+{
+  // Create action goal
+  auto goal_msg = NavToPose::Goal();
+  goal_msg.pose.header.stamp = now();
+  goal_msg.pose.header.frame_id = world_frame_;
+  goal_msg.pose.pose.position.x = goal_pose.position.x;
+  goal_msg.pose.pose.position.y = goal_pose.position.y;
+  goal_msg.pose.pose.position.z = goal_pose.position.z;
+  goal_msg.pose.pose.orientation.x = goal_pose.orientation.x;
+  goal_msg.pose.pose.orientation.y = goal_pose.orientation.y;
+  goal_msg.pose.pose.orientation.z = goal_pose.orientation.z;
+  goal_msg.pose.pose.orientation.w = goal_pose.orientation.w;
+  // Send goal to action server
+  client_ptr_->async_send_goal(goal_msg, send_goal_opts_);
+}
+
+void WaypointsNavigation::exec_loop()
+{
+  // has_activate_ is false, nothing to do
+  if (!has_activate_) {}
+  // go to current waypoint
+  else if (current_wp_ < finish_pose_) {}
+  // go to fianal goal and finish process
+  else if (current_wp_ == finish_pose_)
+  {
+    RCLCPP_INFO_ONCE(this->get_logger(), "Go to final goal");
+  }
 
   // Publish waypoints to be displayed as arrows on rviz2
   pose_array_.header.stamp = now();

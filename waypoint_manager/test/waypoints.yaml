@@ -1,0 +1,11 @@
+waypoints:
+- point: {x: 2.0, y: 0.0, z: 0.0, vel: 1.0, rad: 1.0, stop: true}
+- point: {x: 3.0, y: 0.0, z: 0.0, vel: 1.0, rad: 0.5, stop: false}
+- point: {x: 4.0, y: 0.0, z: 0.0, vel: 1.0, rad: 1.0, stop: false, tandem_start: 1}
+- point: {x: 5.645881, y: 0.021121, z: 0.0, vel: 0.5, rad: 0.5, stop: false}
+- point: {x: 7.348732, y: 0.000849, z: 0.0, vel: 0.5, rad: 0.5, stop: false, tandem_end: 1}
+finish_pose:
+  header: {seq: 0, stamp: 113.132, frame_id: map}
+  pose:
+    position: {x: 9.632701, y: 0.034865, z: 0.0}
+    orientation: {x: -0.0, y: 0.0, z: -0.004310224710037526, w: 0.9999907109383311}

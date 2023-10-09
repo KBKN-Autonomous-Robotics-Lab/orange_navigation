@@ -53,7 +53,7 @@ jobs:
         env:
           ROS_DISTRO: humble # Replace humble for your chosen distro.
           # UPSTREAM_WORKSPACE: dependencies.rosinstall
-          # BEFORE_BUILD_TARGET_WORKSPACE: 'apt update -q && python3 -m pip install ****'
+          BEFORE_BUILD_TARGET_WORKSPACE: 'apt update -q && apt install -y python3-tk && python3 -m pip install pillow numpy numpy-quaternion ruamel.yaml'
           PYLINT_ARGS: '--errors-only'
           PYLINT_CHECK: true
 

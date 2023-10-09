@@ -119,6 +119,6 @@ def get_waypoint_yaml(waypoints: WaypointList, finish_pose: FinishPose):
     s.append(
         "    orientation: {"
         + "x: {}, y: {}, z: {}, w: {}".format(q.x, q.y, q.z, q.w)
-        + "}"
+        + "}\n"
     )
     return "".join(s)

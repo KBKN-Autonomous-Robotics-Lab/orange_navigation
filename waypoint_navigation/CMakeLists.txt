@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 include_directories(
@@ -17,7 +18,12 @@ include_directories(
 )
 
 add_executable(waypoint_nav src/waypoint_nav.cpp)
-ament_target_dependencies(waypoint_nav rclcpp geometry_msgs yaml-cpp)
+ament_target_dependencies(waypoint_nav
+  rclcpp
+  geometry_msgs
+  tf2_geometry_msgs
+  yaml-cpp
+)
 target_link_libraries(waypoint_nav ${YAML_CPP_LIBRARIES})
 
 

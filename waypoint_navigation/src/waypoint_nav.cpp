@@ -1,6 +1,6 @@
 #include "waypoint_navigation/waypoint_nav.h"
 
-WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav")
+WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), has_activate_(false)
 {
   // Parameters
   this->declare_parameter<std::string>("waypoints_file", "");
@@ -22,10 +22,47 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav")
   setWpOrientation();
 
   // Publisher
-  wp_vis_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("~/waypoints", 10);
+  wp_vis_pub_ = this->create_publisher<PoseArray>("~/waypoints", 10);
+
+  // Service
+  start_server_ = create_service<Trigger>("start_wp_nav", std::bind(&WaypointsNavigation::startNavCallback, this,
+                                                                    std::placeholders::_1, std::placeholders::_2));
+  resume_server_ = create_service<Trigger>("resume_nav", std::bind(&WaypointsNavigation::resumeNavCallback, this,
+                                                                   std::placeholders::_1, std::placeholders::_2));
 
   // Main loop runs at 10hz
   timer_ = this->create_wall_timer(1000ms, std::bind(&WaypointsNavigation::run, this));
+}
+
+bool WaypointsNavigation::startNavCallback(const std::shared_ptr<Trigger::Request>,
+                                           std::shared_ptr<Trigger::Response> responce)
+{
+  if (has_activate_ || (current_wp_ != pose_array_.poses.begin()))
+  {
+    RCLCPP_WARN(this->get_logger(), "Waypoint navigation is already started");
+    responce->success = false;
+    return false;
+  }
+  has_activate_ = true;
+  responce->success = true;
+  return true;
+}
+
+bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<Trigger::Request>,
+                                            std::shared_ptr<Trigger::Response> responce)
+{
+  if (has_activate_)
+  {
+    RCLCPP_WARN(this->get_logger(), "Navigation is already active");
+    responce->success = false;
+  }
+  else
+  {
+    RCLCPP_WARN(this->get_logger(), "Navigation has resumed");
+    responce->success = true;
+    has_activate_ = true;
+  }
+  return true;
 }
 
 bool WaypointsNavigation::readFile(const std::string& wp_file_path)

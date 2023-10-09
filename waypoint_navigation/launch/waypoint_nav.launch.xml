@@ -29,4 +29,9 @@
         <param name="robot_frame"              value="$(var robot_frame)"/>
     </node>
 
+    <!-- rviz2 -->
+    <include file="$(find-pkg-share orange_bringup)/launch/rviz2.launch.xml">
+        <arg name="config_file_path" value="$(find-pkg-share waypoint_navigation)/rviz_cfg/waypoint_nav.rviz"/>
+    </include>
+
 </launch>

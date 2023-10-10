@@ -23,6 +23,8 @@
         <param name="waypoints_file"           value="$(var waypoints_file)"/>
         <param name="world_frame"              value="$(var world_frame)"/>
         <param name="robot_frame"              value="$(var robot_frame)"/>
+        <param name="min_dist_err"             value="$(var min_dist_err)"/>
+        <param name="min_yaw_err"              value="$(var min_yaw_err)"/>
         <param name="use_sim_time"             value="$(var use_sim_time)"/>
     </node>
 </launch>

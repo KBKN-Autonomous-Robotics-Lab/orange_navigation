@@ -43,7 +43,7 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0),
   nav_status_ = rclcpp_action::ResultCode::UNKNOWN;
 
   // Main loop runs at 10hz
-  timer_ = this->create_wall_timer(1000ms, std::bind(&WaypointsNavigation::exec_loop, this));
+  timer_ = this->create_wall_timer(1000ms, std::bind(&WaypointsNavigation::execLoop, this));
   waitActionServer();
   RCLCPP_INFO(this->get_logger(), "Successfully connected to server");
   RCLCPP_INFO(this->get_logger(), "Waiting for waypoint navigation to start");
@@ -85,7 +85,7 @@ bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<std_srvs::srv:
   return true;
 }
 
-void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr future)
+void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr& future)
 {
   auto goal_handle = future.get();
   bool is_valid_goal_handle = static_cast<bool>(goal_handle);
@@ -94,7 +94,7 @@ void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr 
 }
 
 void WaypointsNavigation::feedbackCallback(GoalHandleNavToPose::SharedPtr,
-                                           const std::shared_ptr<const NavToPose::Feedback> feedback)
+                                           const std::shared_ptr<const NavToPose::Feedback>& feedback)
 {
   // Probably about 100 Hz
   current_pose_ = feedback->current_pose.pose;
@@ -223,8 +223,9 @@ void WaypointsNavigation::sendGoal(const geometry_msgs::msg::Pose& goal_pose)
     tf2::Quaternion tf2_quat;
     tf2::fromMsg(goal_pose.orientation, tf2_quat);
     tf2::Matrix3x3 m(tf2_quat);
-    double r, p, target_yaw_;
-    m.getRPY(r, p, target_yaw_);
+    double r, p, y;
+    m.getRPY(r, p, y);
+    target_yaw_ = y;
   }
   // Send goal to action server
   nav_status_ = rclcpp_action::ResultCode::UNKNOWN;
@@ -255,7 +256,7 @@ bool WaypointsNavigation::onNavPoint(const geometry_msgs::msg::Pose& goal_pose)
   return dist < dist_err;
 }
 
-void WaypointsNavigation::exec_loop()
+void WaypointsNavigation::execLoop()
 {
   // Publish waypoints to be displayed as arrows on rviz2
   pose_array_.header.stamp = now();

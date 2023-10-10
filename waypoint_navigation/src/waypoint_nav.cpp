@@ -49,7 +49,7 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0),
   RCLCPP_INFO(this->get_logger(), "Waiting for waypoint navigation to start");
 }
 
-bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request> /*request*/,
                                            std::shared_ptr<std_srvs::srv::Trigger::Response> responce)
 {
   if (has_activate_ || (wp_num_ > 0))
@@ -67,7 +67,7 @@ bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::
   return true;
 }
 
-bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request> /*request*/,
                                             std::shared_ptr<std_srvs::srv::Trigger::Response> responce)
 {
   if (has_activate_)
@@ -93,7 +93,7 @@ void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr&
     RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
 }
 
-void WaypointsNavigation::feedbackCallback(GoalHandleNavToPose::SharedPtr,
+void WaypointsNavigation::feedbackCallback(GoalHandleNavToPose::SharedPtr, /*p*/
                                            const std::shared_ptr<const NavToPose::Feedback>& feedback)
 {
   // Probably about 100 Hz

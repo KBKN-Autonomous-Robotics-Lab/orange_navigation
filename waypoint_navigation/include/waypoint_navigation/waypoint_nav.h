@@ -45,9 +45,9 @@ private:
   bool has_activate_;
 
   // Service callback functions
-  bool startNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  bool startNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>& request,
                         std::shared_ptr<std_srvs::srv::Trigger::Response> responce);
-  bool resumeNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  bool resumeNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>& request,
                          std::shared_ptr<std_srvs::srv::Trigger::Response> responce);
   // Nav2 action callback functions
   void responseCallback(const GoalHandleNavToPose::SharedPtr& future);

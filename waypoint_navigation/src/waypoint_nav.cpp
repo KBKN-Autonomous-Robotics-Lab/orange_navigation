@@ -93,7 +93,7 @@ void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr&
     RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
 }
 
-void WaypointsNavigation::feedbackCallback(GoalHandleNavToPose::SharedPtr, /*p*/
+void WaypointsNavigation::feedbackCallback(GoalHandleNavToPose::SharedPtr /*p*/,
                                            const std::shared_ptr<const NavToPose::Feedback>& feedback)
 {
   // Probably about 100 Hz

@@ -1,14 +1,18 @@
 #include "waypoint_navigation/waypoint_nav.h"
 
-WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), has_activate_(false), nav_time_(0), wp_num_(0)
+WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0), wp_num_(0), has_activate_(false)
 {
   // Parameters
   this->declare_parameter<std::string>("waypoints_file", "");
   this->declare_parameter<std::string>("world_frame", "map");
   this->declare_parameter<std::string>("robot_frame", "base_footprint");
+  this->declare_parameter<float>("min_dist_err", 0.3);
+  this->declare_parameter<float>("min_yaw_err", 0.3);
 
   this->get_parameter("world_frame", world_frame_);
   this->get_parameter("robot_frame", robot_frame_);
+  this->get_parameter("min_dist_err", min_dist_err_);
+  this->get_parameter("min_yaw_err", min_yaw_err_);
 
   // Load YAML file
   std::string waypoints_file = "";
@@ -36,6 +40,7 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), has_activate_
   send_goal_opts_.goal_response_callback = std::bind(&WaypointsNavigation::responseCallback, this, _1);
   send_goal_opts_.feedback_callback = std::bind(&WaypointsNavigation::feedbackCallback, this, _1, _2);
   send_goal_opts_.result_callback = std::bind(&WaypointsNavigation::resultCallback, this, _1);
+  nav_status_ = rclcpp_action::ResultCode::UNKNOWN;
 
   // Main loop runs at 10hz
   timer_ = this->create_wall_timer(1000ms, std::bind(&WaypointsNavigation::exec_loop, this));
@@ -47,16 +52,18 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), has_activate_
 bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>,
                                            std::shared_ptr<std_srvs::srv::Trigger::Response> responce)
 {
-  if (has_activate_ || (wp_num_ > 1))
+  if (has_activate_ || (wp_num_ > 0))
   {
     RCLCPP_WARN(this->get_logger(), "Waypoint navigation is already started");
     responce->success = false;
     return false;
   }
   RCLCPP_INFO(this->get_logger(), "Navigation is started now");
-  has_activate_ = true;
   wp_num_ = 1;
+  current_wp_ = pose_array_.poses.begin();
+  sendGoal(*current_wp_);
   responce->success = true;
+  has_activate_ = true;
   return true;
 }
 
@@ -68,9 +75,10 @@ bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<std_srvs::srv:
     RCLCPP_WARN(this->get_logger(), "Navigation is already active");
     responce->success = false;
   }
-  else
+  else if ((wp_num_ > 0) && (current_wp_ <= finish_pose_))
   {
     RCLCPP_INFO(this->get_logger(), "Navigation has resumed");
+    sendGoal(*current_wp_);
     responce->success = true;
     has_activate_ = true;
   }
@@ -83,20 +91,19 @@ void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr 
   bool is_valid_goal_handle = static_cast<bool>(goal_handle);
   if (!is_valid_goal_handle)
     RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-  else
-    RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
 }
 
 void WaypointsNavigation::feedbackCallback(GoalHandleNavToPose::SharedPtr,
                                            const std::shared_ptr<const NavToPose::Feedback> feedback)
 {
-  // About 100 Hz
+  // Probably about 100 Hz
   current_pose_ = feedback->current_pose.pose;
   nav_time_ = feedback->navigation_time.sec;
 }
 
 void WaypointsNavigation::resultCallback(const GoalHandleNavToPose::WrappedResult& result)
 {
+  nav_status_ = result.code;
 }
 
 bool WaypointsNavigation::readFile(const std::string& wp_file_path)
@@ -219,9 +226,13 @@ void WaypointsNavigation::sendGoal(const geometry_msgs::msg::Pose& goal_pose)
     double r, p, target_yaw_;
     m.getRPY(r, p, target_yaw_);
   }
-    
   // Send goal to action server
+  nav_status_ = rclcpp_action::ResultCode::UNKNOWN;
   client_ptr_->async_send_goal(goal_msg, send_goal_opts_);
+  if (current_wp_ == finish_pose_)
+    RCLCPP_INFO(this->get_logger(), "Go to final goal");
+  else
+    RCLCPP_INFO(this->get_logger(), "Go to waypoint %d", wp_num_);
 }
 
 bool WaypointsNavigation::onNavPoint(const geometry_msgs::msg::Pose& goal_pose)
@@ -230,33 +241,22 @@ bool WaypointsNavigation::onNavPoint(const geometry_msgs::msg::Pose& goal_pose)
   float x_diff = goal_pose.position.x - robot_pose.position.x;
   float y_diff = goal_pose.position.y - robot_pose.position.y;
   float dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-  if (waypoint_list_[wp_num_ - 1].stop) {
+  float dist_err = waypoint_list_[wp_num_ - 1].rad;
+  if (waypoint_list_[wp_num_ - 1].stop)
+  {
     tf2::Quaternion tf2_quat;
     tf2::fromMsg(robot_pose.orientation, tf2_quat);
     tf2::Matrix3x3 m(tf2_quat);
     double r, p, robot_yaw;
     m.getRPY(r, p, robot_yaw);
-    
+    double yaw_diff = std::abs(target_yaw_ - robot_yaw);
+    return ((dist < dist_err) && (yaw_diff < min_yaw_err_)) || (nav_status_ == rclcpp_action::ResultCode::SUCCEEDED);
   }
-  return dist < waypoint_list_[wp_num_ - 1].rad;
+  return dist < dist_err;
 }
 
 void WaypointsNavigation::exec_loop()
 {
-  // has_activate_ is false, nothing to do
-  if (!has_activate_) {}
-  // go to current waypoint
-  else if (current_wp_ < finish_pose_)
-  {
-    sendGoal(*current_wp_);
-    has_activate_ = false;
-  }
-  // go to fianal goal and finish process
-  else if (current_wp_ == finish_pose_)
-  {
-    RCLCPP_INFO_ONCE(this->get_logger(), "Go to final goal");
-  }
-
   // Publish waypoints to be displayed as arrows on rviz2
   pose_array_.header.stamp = now();
   wp_vis_pub_->publish(pose_array_);
@@ -264,6 +264,39 @@ void WaypointsNavigation::exec_loop()
   std_msgs::msg::UInt16 msg;
   msg.data = wp_num_;
   wp_num_pub_->publish(msg);
+
+  // If has_activate is false, nothing to do
+  if (!has_activate_)
+    return;
+
+  if (onNavPoint(*current_wp_))
+  {
+    // Reached current waypoint
+    if (current_wp_ < finish_pose_)
+    {
+      bool stop = waypoint_list_[wp_num_ - 1].stop;
+      // If current waypoint is stop point
+      if (stop)
+      {
+        client_ptr_->async_cancel_all_goals();
+        has_activate_ = false;
+        RCLCPP_INFO(this->get_logger(), "Waiting for navigation to resume...");
+      }
+      // Update current waypoint
+      current_wp_++;
+      wp_num_++;
+      // Send next goal
+      if (!stop)
+        sendGoal(*current_wp_);
+    }
+    // Reached final goal
+    else if (current_wp_ == finish_pose_)
+    {
+      RCLCPP_INFO(this->get_logger(), "Final goal reached!!");
+      has_activate_ = false;
+      rclcpp::shutdown();
+    }
+  }
 }
 
 int main(int argc, char* argv[])

@@ -32,6 +32,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp_action::Client<NavToPose>::SharedPtr client_ptr_;
   rclcpp_action::Client<NavToPose>::SendGoalOptions send_goal_opts_;
+  rclcpp_action::ResultCode nav_status_;
 
   std::vector<Waypoint> waypoint_list_;
   geometry_msgs::msg::PoseArray pose_array_;
@@ -40,7 +41,7 @@ private:
   std::string robot_frame_, world_frame_;
   int32_t nav_time_;
   uint16_t wp_num_;
-  double target_yaw_;
+  float target_yaw_, min_dist_err_, min_yaw_err_;
   bool has_activate_;
 
   // Service callback functions

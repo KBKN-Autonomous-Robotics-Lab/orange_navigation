@@ -1,10 +1,11 @@
 #pragma once
 
 #include <rclcpp/rclcpp.hpp>
-#include "rclcpp_action/rclcpp_action.hpp"
+#include <rclcpp_action/rclcpp_action.hpp>
+#include <std_msgs/msg/u_int16.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include "nav2_msgs/action/navigate_to_pose.hpp"
+#include <nav2_msgs/action/navigate_to_pose.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <yaml-cpp/yaml.h>
 #include <chrono>
@@ -27,14 +28,19 @@ public:
 private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_server_, resume_server_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr wp_vis_pub_;
+  rclcpp::Publisher<std_msgs::msg::UInt16>::SharedPtr wp_num_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp_action::Client<NavToPose>::SharedPtr client_ptr_;
   rclcpp_action::Client<NavToPose>::SendGoalOptions send_goal_opts_;
 
   std::vector<Waypoint> waypoint_list_;
   geometry_msgs::msg::PoseArray pose_array_;
+  geometry_msgs::msg::Pose current_pose_;
   std::vector<geometry_msgs::msg::Pose>::iterator current_wp_, finish_pose_;
   std::string robot_frame_, world_frame_;
+  int32_t nav_time_;
+  uint16_t wp_num_;
+  double target_yaw_;
   bool has_activate_;
 
   // Service callback functions
@@ -52,5 +58,6 @@ private:
   void setWpOrientation();
   void waitActionServer();
   void sendGoal(const geometry_msgs::msg::Pose& goal_pose);
+  bool onNavPoint(const geometry_msgs::msg::Pose& goal_pose);
   void exec_loop();
 };

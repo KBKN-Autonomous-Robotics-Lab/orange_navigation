@@ -1,6 +1,6 @@
 #include "waypoint_navigation/waypoint_nav.h"
 
-WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), has_activate_(false)
+WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), has_activate_(false), nav_time_(0), wp_num_(0)
 {
   // Parameters
   this->declare_parameter<std::string>("waypoints_file", "");
@@ -23,6 +23,7 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), has_activate_
 
   // Publisher
   wp_vis_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("~/waypoints", 10);
+  wp_num_pub_ = this->create_publisher<std_msgs::msg::UInt16>("waypoint_num", 10);
 
   // Service
   start_server_ = create_service<std_srvs::srv::Trigger>(
@@ -46,7 +47,7 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), has_activate_
 bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>,
                                            std::shared_ptr<std_srvs::srv::Trigger::Response> responce)
 {
-  if (has_activate_ || (current_wp_ != pose_array_.poses.begin()))
+  if (has_activate_ || (wp_num_ > 1))
   {
     RCLCPP_WARN(this->get_logger(), "Waypoint navigation is already started");
     responce->success = false;
@@ -54,6 +55,7 @@ bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::
   }
   RCLCPP_INFO(this->get_logger(), "Navigation is started now");
   has_activate_ = true;
+  wp_num_ = 1;
   responce->success = true;
   return true;
 }
@@ -77,11 +79,20 @@ bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<std_srvs::srv:
 
 void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr future)
 {
+  auto goal_handle = future.get();
+  bool is_valid_goal_handle = static_cast<bool>(goal_handle);
+  if (!is_valid_goal_handle)
+    RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
+  else
+    RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
 }
 
 void WaypointsNavigation::feedbackCallback(GoalHandleNavToPose::SharedPtr,
                                            const std::shared_ptr<const NavToPose::Feedback> feedback)
 {
+  // About 100 Hz
+  current_pose_ = feedback->current_pose.pose;
+  nav_time_ = feedback->navigation_time.sec;
 }
 
 void WaypointsNavigation::resultCallback(const GoalHandleNavToPose::WrappedResult& result)
@@ -200,8 +211,34 @@ void WaypointsNavigation::sendGoal(const geometry_msgs::msg::Pose& goal_pose)
   goal_msg.pose.pose.orientation.y = goal_pose.orientation.y;
   goal_msg.pose.pose.orientation.z = goal_pose.orientation.z;
   goal_msg.pose.pose.orientation.w = goal_pose.orientation.w;
+  if (waypoint_list_[wp_num_ - 1].stop)
+  {
+    tf2::Quaternion tf2_quat;
+    tf2::fromMsg(goal_pose.orientation, tf2_quat);
+    tf2::Matrix3x3 m(tf2_quat);
+    double r, p, target_yaw_;
+    m.getRPY(r, p, target_yaw_);
+  }
+    
   // Send goal to action server
   client_ptr_->async_send_goal(goal_msg, send_goal_opts_);
+}
+
+bool WaypointsNavigation::onNavPoint(const geometry_msgs::msg::Pose& goal_pose)
+{
+  const geometry_msgs::msg::Pose robot_pose = current_pose_;
+  float x_diff = goal_pose.position.x - robot_pose.position.x;
+  float y_diff = goal_pose.position.y - robot_pose.position.y;
+  float dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
+  if (waypoint_list_[wp_num_ - 1].stop) {
+    tf2::Quaternion tf2_quat;
+    tf2::fromMsg(robot_pose.orientation, tf2_quat);
+    tf2::Matrix3x3 m(tf2_quat);
+    double r, p, robot_yaw;
+    m.getRPY(r, p, robot_yaw);
+    
+  }
+  return dist < waypoint_list_[wp_num_ - 1].rad;
 }
 
 void WaypointsNavigation::exec_loop()
@@ -209,7 +246,11 @@ void WaypointsNavigation::exec_loop()
   // has_activate_ is false, nothing to do
   if (!has_activate_) {}
   // go to current waypoint
-  else if (current_wp_ < finish_pose_) {}
+  else if (current_wp_ < finish_pose_)
+  {
+    sendGoal(*current_wp_);
+    has_activate_ = false;
+  }
   // go to fianal goal and finish process
   else if (current_wp_ == finish_pose_)
   {
@@ -219,6 +260,10 @@ void WaypointsNavigation::exec_loop()
   // Publish waypoints to be displayed as arrows on rviz2
   pose_array_.header.stamp = now();
   wp_vis_pub_->publish(pose_array_);
+  // Publish num of current waypoint
+  std_msgs::msg::UInt16 msg;
+  msg.data = wp_num_;
+  wp_num_pub_->publish(msg);
 }
 
 int main(int argc, char* argv[])

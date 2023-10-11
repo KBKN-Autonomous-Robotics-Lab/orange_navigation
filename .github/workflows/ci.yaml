@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - humble-devel
+  workflow_dispatch:
 
 jobs:
   clang_format_check:

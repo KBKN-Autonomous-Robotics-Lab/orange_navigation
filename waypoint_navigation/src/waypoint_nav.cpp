@@ -55,31 +55,31 @@ bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::
   if (has_activate_ || (wp_num_ > 0))
   {
     RCLCPP_WARN(this->get_logger(), "Waypoint navigation is already started");
-    responce->success = false;
+    response->success = false;
     return false;
   }
   RCLCPP_INFO(this->get_logger(), "Navigation is started now");
   wp_num_ = 1;
   current_wp_ = pose_array_.poses.begin();
   sendGoal(*current_wp_);
-  responce->success = true;
+  response->success = true;
   has_activate_ = true;
   return true;
 }
 
 bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>& /*request*/,
-                                            std::shared_ptr<std_srvs::srv::Trigger::Response> responce)
+                                            std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   if (has_activate_)
   {
     RCLCPP_WARN(this->get_logger(), "Navigation is already active");
-    responce->success = false;
+    response->success = false;
   }
   else if ((wp_num_ > 0) && (current_wp_ <= finish_pose_))
   {
     RCLCPP_INFO(this->get_logger(), "Navigation has resumed");
     sendGoal(*current_wp_);
-    responce->success = true;
+    response->success = true;
     has_activate_ = true;
   }
   return true;

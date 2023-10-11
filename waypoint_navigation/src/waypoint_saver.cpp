@@ -176,7 +176,7 @@ void WaypointsSaver::save(geometry_msgs::msg::TransformStamped& finish_pose)
   ofs << "x: " << finish_pose.transform.rotation.x << ", ";
   ofs << "y: " << finish_pose.transform.rotation.y << ", ";
   ofs << "z: " << finish_pose.transform.rotation.z << ", ";
-  ofs << "w: " << finish_pose.transform.rotation.w << "}" << std::endl;
+  ofs << "w: " << finish_pose.transform.rotation.w << "}\n" << std::endl;
 
   ofs.close();
 }

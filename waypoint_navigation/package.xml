@@ -17,6 +17,8 @@
   <depend>nav2_msgs</depend>
   <depend>std_srvs</depend>
   <depend>yaml-cpp</depend>
+  <depend>orange_ros2</depend>
+  <depend>kbkn_maps</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

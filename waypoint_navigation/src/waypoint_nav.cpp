@@ -43,7 +43,7 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0),
   nav_status_ = rclcpp_action::ResultCode::UNKNOWN;
 
   // Main loop runs at 10hz
-  timer_ = this->create_wall_timer(1000ms, std::bind(&WaypointsNavigation::execLoop, this));
+  timer_ = this->create_wall_timer(100ms, std::bind(&WaypointsNavigation::execLoop, this));
   waitActionServer();
   RCLCPP_INFO(this->get_logger(), "Successfully connected to server");
   RCLCPP_INFO(this->get_logger(), "Waiting for waypoint navigation to start");

@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="use_sim_time"    default="false"/>
+    <arg name="slam_method"     default="slam_toolbox"/>
+    <arg name="with_ros2bag"    default="false"/>
+    <arg name="waypoints_file"  default="$(find-pkg-share waypoint_navigation)/waypoints_cfg/waypoints.yaml"/>
+    <arg name="save_joy_button" default="0"/>
+    <arg name="world_frame"     default="map"/>
+    <arg name="robot_frame"     default="base_footprint"/>
+    <arg name="default_rad"     default="0.8"/>
+
+    <!-- Launch SLAM and rviz -->
+    <include file="$(find-pkg-share orange_slam)/launch/$(var slam_method).launch.xml">
+        <arg name="use_sim_time"          value="false"/>
+        <arg name="with_ros2bag"          value="false"/>
+        <arg name="rviz_config_file_path" value="$(find-pkg-share waypoint_navigation)/rviz_cfg/waypoint_saver.rviz"/>
+    </include>
+
+    <!-- Waypoints saver -->
+    <node pkg="waypoint_navigation" exec="waypoint_saver" output="screen">
+        <param name="filename"          value="$(var waypoints_file)"/>
+        <param name="save_joy_button"   value="$(var save_joy_button)"/>
+        <param name="world_frame"       value="$(var world_frame)"/>
+        <param name="robot_frame"       value="$(var robot_frame)"/>
+        <param name="default_rad"       value="$(var default_rad)"/>
+        
+        <remap from="waypoints_joy"     to="joy"/>
+        <remap from="waypoints_viz"     to="clicked_point"/>
+    </node>
+</launch>

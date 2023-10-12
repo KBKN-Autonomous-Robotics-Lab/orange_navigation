@@ -40,7 +40,6 @@ void SetFinishPanel::save(rviz_common::Config config) const
   rviz_common::Panel::save(config);
 }
 
-
 }  // namespace rviz2_plugins
 
 CLASS_LOADER_REGISTER_CLASS(rviz2_plugins::SetFinishPanel, rviz_common::Panel)

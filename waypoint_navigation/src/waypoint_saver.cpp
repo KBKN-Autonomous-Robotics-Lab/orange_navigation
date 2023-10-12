@@ -155,9 +155,9 @@ void WaypointsSaver::save(geometry_msgs::msg::TransformStamped& finish_pose)
   - point: {x: *, y: *, z: *, ...}
   */
   ofs << "waypoints:" << std::endl;
-  for (size_t i = 0; i < waypoints_.size(); i++)
+  for (Waypoint& waypoint : waypoints_)
   {
-    ofs << "- point: " << waypoints_[i].getYAMLstr() << std::endl;
+    ofs << "- point: " << waypoint.getYAMLstr() << std::endl;
   }
   /*
   finish_pose:

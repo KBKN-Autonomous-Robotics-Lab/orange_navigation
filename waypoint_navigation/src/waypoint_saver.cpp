@@ -47,7 +47,6 @@ bool WaypointsSaver::finishPoseCallback(const std::shared_ptr<std_srvs::srv::Tri
     RCLCPP_INFO_STREAM(this->get_logger(), "Waypoints file saved at " << filename_);
     copyToSrc();
     response->success = true;
-    rclcpp::shutdown();
   }
   catch (const std::exception& e)
   {
@@ -135,6 +134,10 @@ void WaypointsSaver::addWaypointMarker(Waypoint& point)
   marker.color.a = 1.0f;
 
   markers_.push_back(marker);
+
+  RCLCPP_INFO_STREAM(this->get_logger(), "Add waypoint " << number);
+  RCLCPP_INFO_STREAM(this->get_logger(), "x: " << point.x);
+  RCLCPP_INFO_STREAM(this->get_logger(), "y: " << point.y << std::endl);
 }
 
 void WaypointsSaver::publishMarkerArray()

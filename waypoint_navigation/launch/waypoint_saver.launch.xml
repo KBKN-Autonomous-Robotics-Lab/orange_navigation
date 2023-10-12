@@ -23,6 +23,7 @@
         <param name="world_frame"       value="$(var world_frame)"/>
         <param name="robot_frame"       value="$(var robot_frame)"/>
         <param name="default_rad"       value="$(var default_rad)"/>
+        <param name="use_sim_time"      value="$(var use_sim_time)"/>
         
         <remap from="waypoints_joy"     to="joy"/>
         <remap from="waypoints_viz"     to="clicked_point"/>

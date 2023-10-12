@@ -3,7 +3,7 @@
 WaypointsSaver::WaypointsSaver() : Node("waypoint_saver")
 {
   // Parameters
-  this->declare_parameter<std::string>("filename", "waypoints.yaml");
+  this->declare_parameter<std::string>("filename", "~/waypoints.yaml");
   this->declare_parameter<std::string>("world_frame", "map");
   this->declare_parameter<std::string>("robot_frame", "base_footprint");
   this->declare_parameter<int>("save_joy_button", 0);
@@ -26,7 +26,7 @@ WaypointsSaver::WaypointsSaver() : Node("waypoint_saver")
       "waypoints_viz", 1, std::bind(&WaypointsSaver::waypointsVizCallback, this, _1));
   waypoints_joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
       "waypoints_joy", 1, std::bind(&WaypointsSaver::waypointsJoyCallback, this, _1));
-  markers_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("waypoints", 10);
+  markers_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/waypoints", 10);
 
   // Publish markers to rviz at 10hz
   timer_ = this->create_wall_timer(100ms, std::bind(&WaypointsSaver::publishMarkerArray, this));
@@ -44,8 +44,9 @@ bool WaypointsSaver::finishPoseCallback(const std::shared_ptr<std_srvs::srv::Tri
   {
     save(tf_stamped);
     RCLCPP_INFO(this->get_logger(), "Write success!");
+    RCLCPP_INFO_STREAM(this->get_logger(), "Waypoints file saved at " << filename_);
+    copyToSrc();
     response->success = true;
-    response->message = "Waypoints file saved at " + filename_;
     rclcpp::shutdown();
   }
   catch (const std::exception& e)
@@ -57,7 +58,7 @@ bool WaypointsSaver::finishPoseCallback(const std::shared_ptr<std_srvs::srv::Tri
   return true;
 }
 
-void WaypointsSaver::waypointsJoyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
+void WaypointsSaver::waypointsJoyCallback(const sensor_msgs::msg::Joy::SharedPtr& msg)
 {
   // If save_joy_button is not pushed or within 3 seconds after last pushed
   if ((msg->buttons[save_joy_button_] != 1) || ((now() - last_saved_time_).seconds() < 3.0))
@@ -77,7 +78,7 @@ void WaypointsSaver::waypointsJoyCallback(const sensor_msgs::msg::Joy::SharedPtr
   last_saved_time_ = now();
 }
 
-void WaypointsSaver::waypointsVizCallback(const geometry_msgs::msg::PointStamped::SharedPtr msg)
+void WaypointsSaver::waypointsVizCallback(const geometry_msgs::msg::PointStamped::SharedPtr& msg)
 {
   // Add waypoint
   Waypoint point;
@@ -104,7 +105,7 @@ bool WaypointsSaver::getCurrentPose(geometry_msgs::msg::TransformStamped& tf_sta
   return true;
 }
 
-void WaypointsSaver::addWaypointMarker(Waypoint point)
+void WaypointsSaver::addWaypointMarker(Waypoint& point)
 {
   float scale = 0.2;
   size_t number = waypoints_.size();
@@ -157,7 +158,7 @@ void WaypointsSaver::save(geometry_msgs::msg::TransformStamped& finish_pose)
   }
   /*
   finish_pose:
-    header: {seq: *, nanoseq: *, frame_id: *}
+    header: {seq: *, stamp: *, frame_id: *}
     pose:
       positioin: {x: *, y: *, z: *}
       orientation: {x: *, y: *, z: *, w: *}
@@ -179,6 +180,63 @@ void WaypointsSaver::save(geometry_msgs::msg::TransformStamped& finish_pose)
   ofs << "w: " << finish_pose.transform.rotation.w << "}\n" << std::endl;
 
   ofs.close();
+}
+
+void WaypointsSaver::copyToSrc()
+{
+  // Get workspace/install path from environment variable
+  const char* colcon_prefix = std::getenv("COLCON_PREFIX_PATH");
+  if (!colcon_prefix)
+    throw std::runtime_error("COLCON_PREFIX_PATH is not set");
+
+  // Get workspace/src directory path
+  fs::path ws_install(colcon_prefix);
+  fs::path ws_src = ws_install.parent_path() / "src";
+  // Get path under package directory
+  bool found = false;
+  fs::path under_pkg;
+  for (const auto& part : fs::path(filename_))
+  {
+    if (found)
+      under_pkg /= part;
+    if (part == "share")  // ${COLCON_PREFIX_PATH}/package_name/share/package_name/...
+      found = true;
+  }
+  if (!found)
+    throw std::runtime_error("Given filename is not in " + *colcon_prefix);
+
+  // Get package name
+  fs::path pkg_name;
+  for (const auto& part : under_pkg)
+  {
+    pkg_name = part;
+    break;
+  }
+  // Get package parent path
+  fs::path pkg_parent;
+  for (const auto& entry : fs::recursive_directory_iterator(ws_src))
+  {
+    if ((entry.is_regular_file()) && (entry.path().filename() == "package.xml") &&
+        (entry.path().parent_path().filename() == pkg_name))
+    {
+      pkg_parent = entry.path().parent_path().parent_path();
+      break;
+    }
+  }
+  if (pkg_parent.empty())
+    throw std::runtime_error("Package " + pkg_name.string() + "is not found");
+
+  // Copy from filename_
+  fs::path copy_path = pkg_parent / under_pkg;
+  try
+  {
+    fs::copy(fs::path(filename_), copy_path, fs::copy_options::overwrite_existing);
+    RCLCPP_INFO_STREAM(this->get_logger(), "Copied at " << copy_path.string());
+  }
+  catch (const fs::filesystem_error& e)
+  {
+    throw std::runtime_error("Failed to copy from" + filename_ + " to " + copy_path.string());
+  }
 }
 
 int main(int argc, char* argv[])

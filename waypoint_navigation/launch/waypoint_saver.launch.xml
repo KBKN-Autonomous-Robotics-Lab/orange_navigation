@@ -17,7 +17,7 @@
     </include>
 
     <!-- Waypoints saver -->
-    <node pkg="waypoint_navigation" exec="waypoint_saver" output="screen">
+    <node pkg="waypoint_navigation" exec="waypoint_saver" output="screen" launch-prefix="xterm -e">
         <param name="filename"          value="$(var waypoints_file)"/>
         <param name="save_joy_button"   value="$(var save_joy_button)"/>
         <param name="world_frame"       value="$(var world_frame)"/>

@@ -23,7 +23,9 @@ include_directories(
 
 add_library(${PROJECT_NAME} SHARED
   src/state_trigger_panel.cpp
+  src/set_finish_panel.cpp
   include/${PROJECT_NAME}/state_trigger_panel.h
+  include/${PROJECT_NAME}/set_finish_panel.h
   ${MOC_FILES}
 )
 

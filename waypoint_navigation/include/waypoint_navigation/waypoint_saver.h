@@ -48,8 +48,8 @@ private:
 
   bool finishPoseCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>& request,
                           std::shared_ptr<std_srvs::srv::Trigger::Response> response);
-  void waypointsJoyCallback(const sensor_msgs::msg::Joy::SharedPtr& msg);
-  void waypointsVizCallback(const geometry_msgs::msg::PointStamped::SharedPtr& msg);
+  void waypointsJoyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
+  void waypointsVizCallback(const geometry_msgs::msg::PointStamped::SharedPtr msg);
   bool getCurrentPose(geometry_msgs::msg::TransformStamped& tf_stamped);
   void addWaypointMarker(Waypoint& point);
   void publishMarkerArray();

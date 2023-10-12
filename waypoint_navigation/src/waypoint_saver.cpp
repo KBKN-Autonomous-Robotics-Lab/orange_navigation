@@ -58,7 +58,7 @@ bool WaypointsSaver::finishPoseCallback(const std::shared_ptr<std_srvs::srv::Tri
   return true;
 }
 
-void WaypointsSaver::waypointsJoyCallback(const sensor_msgs::msg::Joy::SharedPtr& msg)
+void WaypointsSaver::waypointsJoyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   // If save_joy_button is not pushed or within 3 seconds after last pushed
   if ((msg->buttons[save_joy_button_] != 1) || ((now() - last_saved_time_).seconds() < 3.0))
@@ -78,7 +78,7 @@ void WaypointsSaver::waypointsJoyCallback(const sensor_msgs::msg::Joy::SharedPtr
   last_saved_time_ = now();
 }
 
-void WaypointsSaver::waypointsVizCallback(const geometry_msgs::msg::PointStamped::SharedPtr& msg)
+void WaypointsSaver::waypointsVizCallback(const geometry_msgs::msg::PointStamped::SharedPtr msg)
 {
   // Add waypoint
   Waypoint point;

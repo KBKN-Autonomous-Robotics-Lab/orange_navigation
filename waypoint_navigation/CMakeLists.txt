@@ -10,7 +10,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -33,6 +37,17 @@ ament_target_dependencies(waypoint_nav
 )
 target_link_libraries(waypoint_nav ${YAML_CPP_LIBRARIES})
 
+add_executable(waypoint_saver src/waypoint_saver.cpp)
+ament_target_dependencies(waypoint_saver
+  rclcpp
+  sensor_msgs
+  geometry_msgs
+  visualization_msgs
+  tf2
+  tf2_ros
+  std_srvs
+)
+
 
 install(DIRECTORY launch waypoints_cfg rviz_cfg
   DESTINATION share/${PROJECT_NAME}/
@@ -40,6 +55,7 @@ install(DIRECTORY launch waypoints_cfg rviz_cfg
 
 install(TARGETS
   waypoint_nav
+  waypoint_saver
   DESTINATION lib/${PROJECT_NAME}/
 )
 

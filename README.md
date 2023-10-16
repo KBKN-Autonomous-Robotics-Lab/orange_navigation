@@ -20,3 +20,7 @@ $ source venv/bin/active
 ```
 $ echo "alias waypoint_manager='path/to/orange_navigation/waypoint_manager/run_app.sh'" >> ~/.bashrc
 ```
+
+## Documentaion
+
+- [Wiki (Japanese)](https://github.com/KBKN-Autonomous-Robotics-Lab/orange_navigation/wiki)

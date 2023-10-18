@@ -1,0 +1,7 @@
+tandem_run_manager:
+  ros__parameters:
+    switch_costmap:
+      node_names: 
+        - "global_costmap/global_costmap"
+      layer_names:
+        - "obstacle_layer"

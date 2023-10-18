@@ -7,8 +7,10 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -49,7 +51,7 @@ ament_target_dependencies(waypoint_saver
 )
 
 
-install(DIRECTORY launch waypoints_cfg rviz_cfg
+install(DIRECTORY launch waypoints_cfg rviz_cfg config
   DESTINATION share/${PROJECT_NAME}/
 )
 
@@ -58,5 +60,12 @@ install(TARGETS
   waypoint_saver
   DESTINATION lib/${PROJECT_NAME}/
 )
+
+
+ament_python_install_package(${PROJECT_NAME})
+
+install(PROGRAMS
+  scripts/tandem_run_manager.py
+  DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

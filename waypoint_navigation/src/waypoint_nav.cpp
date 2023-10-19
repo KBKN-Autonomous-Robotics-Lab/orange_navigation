@@ -32,6 +32,8 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0),
   // Service
   start_server_ = create_service<std_srvs::srv::Trigger>(
       "start_wp_nav", std::bind(&WaypointsNavigation::startNavCallback, this, _1, _2));
+  stop_server_ = create_service<std_srvs::srv::Trigger>("stop_wp_nav",
+                                                        std::bind(&WaypointsNavigation::stopNavCallback, this, _1, _2));
   resume_server_ = create_service<std_srvs::srv::Trigger>(
       "resume_nav", std::bind(&WaypointsNavigation::resumeNavCallback, this, _1, _2));
 
@@ -64,6 +66,23 @@ bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::
   sendGoal(*current_wp_);
   response->success = true;
   has_activate_ = true;
+  return true;
+}
+
+bool WaypointsNavigation::stopNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>& /*request*/,
+                                          std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+{
+  if (has_activate_)
+  {
+    RCLCPP_INFO(this->get_logger(), "Waypoint navigation has been stopped");
+    has_activate_ = false;
+    response->success = true;
+  }
+  else
+  {
+    RCLCPP_WARN(this->get_logger(), "Waypoint navigation is already stopped");
+    response->success = false;
+  }
   return true;
 }
 
@@ -251,7 +270,8 @@ bool WaypointsNavigation::onNavPoint(const geometry_msgs::msg::Pose& goal_pose)
     double r, p, robot_yaw;
     m.getRPY(r, p, robot_yaw);
     double yaw_diff = std::abs(target_yaw_ - robot_yaw);
-    return ((dist < dist_err) && (yaw_diff < min_yaw_err_)) || (nav_status_ == rclcpp_action::ResultCode::SUCCEEDED);
+    return ((dist < min_dist_err_) && (yaw_diff < min_yaw_err_)) ||
+           (nav_status_ == rclcpp_action::ResultCode::SUCCEEDED);
   }
   return dist < dist_err;
 }
@@ -288,7 +308,10 @@ void WaypointsNavigation::execLoop()
       wp_num_++;
       // Send next goal
       if (!stop)
+      {
         sendGoal(*current_wp_);
+        rclcpp::sleep_for(3s);
+      }
     }
     // Reached final goal
     else if (current_wp_ == finish_pose_)

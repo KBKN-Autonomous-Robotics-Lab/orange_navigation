@@ -26,7 +26,7 @@ public:
   WaypointsNavigation();
 
 private:
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_server_, resume_server_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_server_, stop_server_, resume_server_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr wp_vis_pub_;
   rclcpp::Publisher<std_msgs::msg::UInt16>::SharedPtr wp_num_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
@@ -47,6 +47,8 @@ private:
   // Service callback functions
   bool startNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>& request,
                         std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  bool stopNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>& request,
+                       std::shared_ptr<std_srvs::srv::Trigger::Response> response);
   bool resumeNavCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request>& request,
                          std::shared_ptr<std_srvs::srv::Trigger::Response> response);
   // Nav2 action callback functions

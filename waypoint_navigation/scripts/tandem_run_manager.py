@@ -2,13 +2,14 @@
 
 import rclpy
 from rclpy.node import Node
-from rclpy.client import Client
 from rcl_interfaces.srv import SetParameters
+from rclpy import qos
 from std_msgs.msg import UInt16
 from sensor_msgs.msg import LaserScan
 from std_srvs.srv import Trigger
 import numpy as np
 import ruamel.yaml
+import time
 
 
 NODE_NAME = "tandem_run_manager"
@@ -20,9 +21,11 @@ class TandemManager(Node):
 
         ## Parameters
         self.declare_parameter("waypoints_file", "")
-        self.declare_parameter("switch_costmap.node_names", [])
-        self.declare_parameter("switch_costmap.layer_names", [])
-        self.declare_parameter("use_angle", 20)  # degree
+        self.declare_parameter(
+            "switch_costmap.node_names", ["global_costmap/global_costmap"]
+        )
+        self.declare_parameter("switch_costmap.layer_names", ["obstacle_layer"])
+        self.declare_parameter("use_angle", 20.0)  # degree
         self.declare_parameter("danger_dist", 1.0)  # meter
 
         self.costmap_nodes = (
@@ -64,7 +67,7 @@ class TandemManager(Node):
         self.param_clients = []
         for node_name in self.costmap_nodes:
             self.param_clients.append(
-                self.create_client(SetParameters, node_name + "/set_parameters")
+                self.create_client(SetParameters, f"{node_name}/set_parameters")
             )
 
         ## Variables
@@ -72,17 +75,22 @@ class TandemManager(Node):
         self.front_range = None
         self.in_tandem_area = False
         self.stop = False
+        self.resume_dist = self.danger_dist + 0.3
 
         ## Service Clients
-        self.stop_nav_client = self.create_client(Trigger, "/stop_wp_nav")
-        self.resume_nav_client = self.create_client(Trigger, "/resume_nav")
+        self.stop_nav_client = self.create_client(Trigger, "stop_wp_nav")
+        self.resume_nav_client = self.create_client(Trigger, "resume_nav")
 
         ## Subscribers
+        # qos_profile = QoSProfile(reliability=QoSReliabilityPolicy.BEST_EFFORT)
         self.wp_num_sub = self.create_subscription(
-            UInt16, "/waypoint_num", self.waypoint_num_callback, 10
+            UInt16, "waypoint_num", self.waypoint_num_callback, 10
         )
         self.scan_sub = self.create_subscription(
-            LaserScan, "/scan", self.laserscan_callback, 10
+            LaserScan,
+            "scan",
+            self.laserscan_callback,
+            qos.qos_profile_sensor_data,
         )
         return
 
@@ -125,53 +133,49 @@ class TandemManager(Node):
 
     ## Subscribe LaserScan to observe obstacles in front of robot
     def laserscan_callback(self, msg: LaserScan):
-        try:
-            if self.front_range is None:
-                front = round(-msg.angle_min / msg.angle_increment)
-                ran = int(round(np.deg2rad(self.front_angle / 2) / msg.angle_increment))
-                self.front_range = [front - ran, front + ran]
-                return
+        if self.front_range is None:
+            front = round(-msg.angle_min / msg.angle_increment)
+            ran = int(round(np.deg2rad(self.front_angle / 2) / msg.angle_increment))
+            self.front_range = [front - ran, front + ran]
+            return
 
-            if not self.in_tandem_area:
-                return
-            ranges = np.array(msg.ranges[self.front_range[0] : self.front_range[1]])
-            ## Use simply minimum
-            ranges[ranges <= msg.range_min] = msg.range_max
-            min_range = min(ranges)
-            ## or use sort
-            # sort_ranges = np.sort(ranges)
-            # min_range = np.mean(sort_ranges[:5])
-            if (not self.stop) and (min_range < self.danger_dist):
-                self.stop_nav_client.call_async(SetParameters.Request())
-                self.stop = True
-                self.get_logger().info(
-                    "Stop because of obstacle within {}m ahead.".format(
-                        self.danger_dist
-                    )
-                )
+        if not self.in_tandem_area:
+            return
+        ranges = np.array(msg.ranges[self.front_range[0] : self.front_range[1]])
+        ## Use simply minimum
+        ranges[ranges <= msg.range_min] = msg.range_max
+        min_range = min(ranges)
+        ## or use sort
+        # sort_ranges = np.sort(ranges)
+        # min_range = np.mean(sort_ranges[:5])
+        if (not self.stop) and (min_range < self.danger_dist):
+            self.stop_nav_client.call_async(Trigger.Request())
+            self.stop = True
+            self.get_logger().info(
+                f"Stop because of obstacle within {self.danger_dist}m ahead."
+            )
 
-            elif (self.stop) and (min_range >= self.danger_dist + 0.1):
-                self.resume_nav_client.call_async(SetParameters.Request())
-                self.stop = False
-                self.get_logger().info(
-                    f"Resumed navigation because the obstacle ahead was more than {self.danger_dist + 0.1}m away."
-                )
-        except AttributeError:
-            pass
+        elif (self.stop) and (min_range >= self.resume_dist):
+            self.resume_nav_client.call_async(Trigger.Request())
+            self.stop = False
+            self.get_logger().info(
+                f"Resumed navigation because the obstacle ahead was more than {self.resume_dist}m away."
+            )
         return
 
     def update_costmap_config(self, enabled: bool):
-        for i, client in enumerate(self.clients):
-            while not client.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info("service not available, waiting again...")
+        self.stop_nav_client.call_async(Trigger.Request())
+        for i, client in enumerate(self.param_clients):
             req = SetParameters.Request()
             req.parameters.append(
                 rclpy.Parameter(
-                    name=self.costmap_layers[i] + ".enabled",
+                    name=f"{self.costmap_layers[i]}.enabled",
                     value=enabled,
                 ).to_parameter_msg()
             )
             client.call_async(req)
+        time.sleep(1)
+        self.resume_nav_client.call_async(Trigger.Request())
         return
 
 
@@ -179,16 +183,13 @@ def main(args=None):
     rclpy.init(args=args)
     tandem_manager = TandemManager()
 
-    print(tandem_manager.tandem_start_list)
-
     if len(tandem_manager.tandem_start_list) > 0:
         try:
             rclpy.spin(tandem_manager)
-        except Exception as e:
-            print(e)
-
-    tandem_manager.destroy_node()
-    rclpy.shutdown()
+            tandem_manager.destroy_node()
+            rclpy.shutdown()
+        except KeyboardInterrupt:
+            pass
 
 
 if __name__ == "__main__":

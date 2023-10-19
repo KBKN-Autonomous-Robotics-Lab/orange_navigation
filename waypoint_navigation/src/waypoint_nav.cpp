@@ -25,9 +25,11 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0),
   finish_pose_ = pose_array_.poses.end() - 1;
   setWpOrientation();
 
-  // Publisher
+  // Publisher, Subscriber
   wp_vis_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("~/waypoints", 10);
   wp_num_pub_ = this->create_publisher<std_msgs::msg::UInt16>("waypoint_num", 10);
+  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+      "cmd_vel", 1, std::bind(&WaypointsNavigation::cmdVelCallback, this, _1));
 
   // Service
   start_server_ = create_service<std_srvs::srv::Trigger>(
@@ -74,6 +76,7 @@ bool WaypointsNavigation::stopNavCallback(const std::shared_ptr<std_srvs::srv::T
 {
   if (has_activate_)
   {
+    client_ptr_->async_cancel_all_goals();
     RCLCPP_INFO(this->get_logger(), "Waypoint navigation has been stopped");
     has_activate_ = false;
     response->success = true;
@@ -102,6 +105,17 @@ bool WaypointsNavigation::resumeNavCallback(const std::shared_ptr<std_srvs::srv:
     has_activate_ = true;
   }
   return true;
+}
+
+void WaypointsNavigation::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+  if (has_activate_ && (-1e-3 < msg->linear.x) && (msg->linear.x < 1e-3) && (-1e-3 < msg->angular.z) &&
+      (msg->angular.z < 1e-3))
+  {
+    // "linear velocity and angular velocity are zero"
+  }
+  else
+    last_move_time_ = now().seconds();
 }
 
 void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr& future)
@@ -215,6 +229,16 @@ void WaypointsNavigation::setWpOrientation()
   pose_array_.header.frame_id = world_frame_;
 }
 
+void WaypointsNavigation::clearCostmap()
+{
+  // Clear local costmap
+  auto client =
+      this->create_client<nav2_msgs::srv::ClearCostmapAroundRobot>("/local_costmap/clear_around_local_costmap");
+  auto request = std::make_shared<nav2_msgs::srv::ClearCostmapAroundRobot::Request>();
+  client->async_send_request(request);
+  rclcpp::sleep_for(1s);
+}
+
 void WaypointsNavigation::waitActionServer()
 {
   while (rclcpp::ok() && (!client_ptr_->wait_for_action_server(5s)))
@@ -247,12 +271,15 @@ void WaypointsNavigation::sendGoal(const geometry_msgs::msg::Pose& goal_pose)
     target_yaw_ = y;
   }
   // Send goal to action server
+  waitActionServer();
   nav_status_ = rclcpp_action::ResultCode::UNKNOWN;
   client_ptr_->async_send_goal(goal_msg, send_goal_opts_);
+  start_nav_time_ = now().seconds();
   if (current_wp_ == finish_pose_)
     RCLCPP_INFO(this->get_logger(), "Go to final goal");
   else
     RCLCPP_INFO(this->get_logger(), "Go to waypoint %d", wp_num_);
+  rclcpp::sleep_for(1s);
 }
 
 bool WaypointsNavigation::onNavPoint(const geometry_msgs::msg::Pose& goal_pose)
@@ -290,6 +317,17 @@ void WaypointsNavigation::execLoop()
   if (!has_activate_)
     return;
 
+  // If no movement for certain period of time after sending goal
+  double t = now().seconds();
+  if ((t - start_nav_time_ > 10) && (t - last_move_time_ > 10))
+  {
+    RCLCPP_WARN(this->get_logger(), "Resend current goal");
+    clearCostmap();
+    sendGoal(*current_wp_);
+    start_nav_time_ = now().seconds();
+    return;
+  }
+
   if (onNavPoint(*current_wp_))
   {
     // Reached current waypoint
@@ -308,10 +346,7 @@ void WaypointsNavigation::execLoop()
       wp_num_++;
       // Send next goal
       if (!stop)
-      {
         sendGoal(*current_wp_);
-        rclcpp::sleep_for(3s);
-      }
     }
     // Reached final goal
     else if (current_wp_ == finish_pose_)

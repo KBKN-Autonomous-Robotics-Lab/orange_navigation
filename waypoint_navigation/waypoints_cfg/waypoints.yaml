@@ -2,8 +2,11 @@ waypoints:
 - point: {x: 6.421462, y: 9.324513, z: 0.0, vel: 1.0, rad: 1.0, stop: false}
 - point: {x: 2.851141, y: 9.279884, z: 0.0, vel: 1.0, rad: 1.0, stop: true}
 - point: {x: -0.094374, y: 9.279884, z: 0.0, vel: 1.0, rad: 0.5, stop: false, tandem_start: 1}
-- point: {x: -3.106833, y: 9.279884, z: 0.0, vel: 0.5, rad: 0.5, stop: true}
+- point: {x: -3.106833, y: 9.279884, z: 0.0, vel: 0.5, rad: 0.5, stop: false}
 - point: {x: -6.788726, y: 9.324513, z: 0.0, vel: 0.5, rad: 1.0, stop: false, tandem_end: 1}
+- point: {x: -8.250327, y: 6.010808, z: 0.0, vel: 1, rad: 1, stop: false, tandem_start: 2}
+- point: {x: -8.19454, y: 0.889629, z: 0.0, vel: 1, rad: 1, stop: false}
+- point: {x: -8.205698, y: -4.075349, z: 0.0, vel: 1, rad: 1, stop: false, tandem_end: 2}
 finish_pose:
   header: {seq: 0, stamp: 113.132, frame_id: map}
   pose:

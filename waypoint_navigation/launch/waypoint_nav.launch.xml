@@ -8,9 +8,9 @@
     <arg name="min_yaw_err"        default="0.3"/>
     <arg name="use_sim_time"       default="false"/>
     <arg name="costmaps_file"      default="$(find-pkg-share waypoint_navigation)/config/switch_costmaps.yaml"/>
-    <arg name="tandem_scan"        default="scan"/>
-    <arg name="use_angle"          default="20"/>
-    <arg name="danger_dist"        default="1.0"/>
+    <arg name="tandem_scan"        default="merged_scan"/>
+    <arg name="use_angle"          default="20.0"/>
+    <arg name="danger_dist"        default="2.0"/>
     <!--
     <arg name="StartFromTheMiddle" default="false"/>
     <arg name="cmd_vel_topic_in"   default="/move_base/cmd_vel"/>
@@ -33,6 +33,7 @@
         <param name="tandem_scan"              value="$(var tandem_scan)"/>
         <param name="use_angle"                value="$(var use_angle)"/>
         <param name="danger_dist"              value="$(var danger_dist)"/>
+        <param name="use_sim_time"             value="$(var use_sim_time)"/>
         <param from="$(var costmaps_file)"/>
 
         <remap from="scan" to="$(var tandem_scan)"/>

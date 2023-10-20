@@ -1,5 +1,4 @@
-import numpy as np
-import quaternion
+import math
 
 
 class WaypointList:
@@ -78,14 +77,15 @@ class FinishPose:
 
         self.x = self.position["x"]
         self.y = self.position["y"]
-        self.yaw = self.get_euler()
+        self.yaw = self.get_yaw()
         self.id = None
         return
 
-    def get_euler(self):
+    def get_yaw(self):
         o = self.orientation
-        q = np.quaternion(o["x"], o["y"], o["z"], o["w"])
-        return quaternion.as_euler_angles(q)[1]
+        x, y, z, w = o["x"], o["y"], o["z"], o["w"]
+        yaw = math.atan2(2 * (x * y + z * w), 1 - 2 * (y**2 + z**2))
+        return yaw
 
 
 def get_waypoint_yaml(waypoints: WaypointList, finish_pose: FinishPose):
@@ -115,10 +115,13 @@ def get_waypoint_yaml(waypoints: WaypointList, finish_pose: FinishPose):
     y = finish_pose.y
     z = finish_pose.position["z"]
     s.append("    position: {" + "x: {}, y: {}, z: {}".format(x, y, z) + "}" + "\n")
-    q = quaternion.from_euler_angles([0, 0, finish_pose.yaw])
+    yaw = finish_pose.yaw
+    qx, qy = 0.0, 0.0
+    qz = math.sin(yaw / 2)
+    qw = math.cos(yaw / 2)
     s.append(
         "    orientation: {"
-        + "x: {}, y: {}, z: {}, w: {}".format(q.x, q.y, q.z, q.w)
+        + "x: {}, y: {}, z: {}, w: {}".format(qx, qy, qz, qw)
         + "}\n"
     )
     return "".join(s)

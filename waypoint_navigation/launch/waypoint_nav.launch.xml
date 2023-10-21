@@ -6,25 +6,35 @@
     <arg name="min_dist_err"       default="0.3"/>
     <arg name="min_yaw_err"        default="0.3"/>
     <arg name="use_sim_time"       default="false"/>
+    <arg name="costmaps_file"      default="$(find-pkg-share waypoint_navigation)/config/switch_costmaps.yaml"/>
+    <arg name="tandem_scan"        default="merged_scan"/>
+    <arg name="use_angle"          default="20.0"/>
+    <arg name="danger_dist"        default="2.0"/>
     <!--
     <arg name="StartFromTheMiddle" default="false"/>
     <arg name="cmd_vel_topic_in"   default="/move_base/cmd_vel"/>
     <arg name="cmd_vel_topic_out"  default="/wp_nav/cmd_vel"/>
-    
     <arg name="max_vel_param"      default="/move_base/TrajectoryPlannerROS/max_vel_x"/>
     <arg name="min_vel_param"      default="/move_base/TrajectoryPlannerROS/min_vel_x"/>
-    <arg name="costmaps_file"      default="$(find waypoint_navigation)/scripts/switch_costmaps.yaml"/>
-    <arg name="tandem_scan"        default="scan"/>
-    <arg name="use_angle"          default="20"/>
-    <arg name="danger_dist"        default="1.0"/>
     -->
 
-    <node pkg="waypoint_navigation" exec="waypoint_nav" output="screen">
+    <node pkg="waypoint_navigation" exec="waypoint_nav" output="screen" launch-prefix="xterm -e">
         <param name="waypoints_file"           value="$(var waypoints_file)"/>
         <param name="world_frame"              value="$(var world_frame)"/>
         <param name="robot_frame"              value="$(var robot_frame)"/>
         <param name="min_dist_err"             value="$(var min_dist_err)"/>
         <param name="min_yaw_err"              value="$(var min_yaw_err)"/>
         <param name="use_sim_time"             value="$(var use_sim_time)"/>
+    </node>
+
+    <node pkg="waypoint_navigation" exec="tandem_run_manager.py" output="screen">
+        <param name="waypoints_file"           value="$(var waypoints_file)"/>
+        <param name="tandem_scan"              value="$(var tandem_scan)"/>
+        <param name="use_angle"                value="$(var use_angle)"/>
+        <param name="danger_dist"              value="$(var danger_dist)"/>
+        <param name="use_sim_time"             value="$(var use_sim_time)"/>
+        <param from="$(var costmaps_file)"/>
+
+        <remap from="scan" to="$(var tandem_scan)"/>
     </node>
 </launch>

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="waypoints_file"     default="$(find-pkg-share kbkn_maps)/waypoints/hosei/20231011_Senior.yaml"/>
+    <arg name="waypoints_file"     default="$(find-pkg-share kbkn_maps)/waypoints/tsukuba/20230923/m2/20230923_Senior.yaml"/>
     <arg name="world_frame"        default="map"/>
     <arg name="robot_frame"        default="base_footprint"/>
     <arg name="min_dist_err"       default="0.3"/>

@@ -2,7 +2,8 @@
 <launch>
     <arg name="use_sim_time"     default="false"/>
     <arg name="map_file_name"    default="map.yaml"/>
-    <arg name="map_file_path"    default="$(find-pkg-share kbkn_maps)/maps/hosei/20231011_Senior.yaml"/>
+    <arg name="map_file_path"    default="$(find-pkg-share kbkn_maps)/maps/tsukuba/20230923/m2/20230923_Senior.yaml"/>
+    <!-- <arg name="map_file_path"    default="$(find-pkg-share kbkn_maps)/maps/gazebo/orange_hosei/slam_toolbox/map.yaml"/> -->
     <arg name="config_file_path" default="$(find-pkg-share orange_navigation)/config/navigation2_params.yaml"/>
 
     <!-- navigation2 -->

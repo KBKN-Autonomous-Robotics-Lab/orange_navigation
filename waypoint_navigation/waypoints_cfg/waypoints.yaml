@@ -1,14 +1,10 @@
 waypoints:
-- point: {x: 6.421462, y: 9.324513, z: 0.0, vel: 1.0, rad: 1.0, stop: false}
-- point: {x: 2.851141, y: 9.279884, z: 0.0, vel: 1.0, rad: 1.0, stop: true}
-- point: {x: -0.094374, y: 9.279884, z: 0.0, vel: 1.0, rad: 0.5, stop: false, tandem_start: 1}
-- point: {x: -3.106833, y: 9.279884, z: 0.0, vel: 0.5, rad: 0.5, stop: false}
-- point: {x: -6.788726, y: 9.324513, z: 0.0, vel: 0.5, rad: 1.0, stop: false, tandem_end: 1}
-- point: {x: -8.250327, y: 6.010808, z: 0.0, vel: 1, rad: 1, stop: false, tandem_start: 2}
-- point: {x: -8.19454, y: 0.889629, z: 0.0, vel: 1, rad: 1, stop: false}
-- point: {x: -8.205698, y: -4.075349, z: 0.0, vel: 1, rad: 1, stop: false, tandem_end: 2}
+- point: {x: 5.52595, y: 0.262192, z: 0.0, vel: 1.0, rad: 1.0, stop: false, tandem_start: 1}
+- point: {x: 12.404962, y: 0.652239, z: 0.0, vel: 1.0, rad: 1.0, stop: false}
+- point: {x: 19.744938, y: 0.93591, z: 0.0, vel: 1.0, rad: 0.5, stop: false}
+- point: {x: 28.538726, y: 1.467792, z: 0.0, vel: 0.5, rad: 0.5, stop: false, tandem_end: 1}
 finish_pose:
   header: {seq: 0, stamp: 113.132, frame_id: map}
   pose:
-    position: {x: -8.205698, y: 6.791816, z: 0.0}
-    orientation: {x: -0.0, y: 0.0, z: -0.7162280602979053, w: 0.6978662949605032}
+    position: {x: 34.974502, y: 1.946486, z: 0.0}
+    orientation: {x: 0.0, y: 0.0, z: 0.01281735328604857, w: 0.9999178543534168}

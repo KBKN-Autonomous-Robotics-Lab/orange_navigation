@@ -237,7 +237,8 @@ void WaypointsSaver::copyToSrc()
   fs::path copy_path = pkg_parent / under_pkg;
   try
   {
-    if (!fs::exists(copy_path.parent_path())) {
+    if (!fs::exists(copy_path.parent_path()))
+    {
       fs::create_directories(copy_path.parent_path());
     }
     fs::copy(fs::path(filename_), copy_path, fs::copy_options::overwrite_existing);

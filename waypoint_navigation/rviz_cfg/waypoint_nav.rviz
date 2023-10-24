@@ -18,6 +18,7 @@ Panels:
   - Class: rviz_common/Views
     Expanded:
       - /Current View1
+      - /Current View1/Focal Point1
     Name: Views
     Splitter Ratio: 0.5
   - Class: nav2_rviz_plugins/Navigation 2
@@ -484,26 +485,26 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz_default_plugins/Orbit
-      Distance: 41.131011962890625
+      Class: rviz_default_plugins/ThirdPersonFollower
+      Distance: 34.972957611083984
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.04400372505187988
-        Y: -0.048000067472457886
-        Z: -5.3453474044799805
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4597963094711304
+      Pitch: 1.2000000476837158
       Target Frame: base_footprint
-      Value: Orbit (rviz_default_plugins)
-      Yaw: 0.0015974044799804688
+      Value: ThirdPersonFollower (rviz_default_plugins)
+      Yaw: 3.141592025756836
     Saved: ~
 Window Geometry:
   Displays:

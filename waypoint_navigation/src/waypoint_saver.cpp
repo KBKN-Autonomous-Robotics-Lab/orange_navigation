@@ -149,6 +149,10 @@ void WaypointsSaver::publishMarkerArray()
 
 void WaypointsSaver::save(geometry_msgs::msg::TransformStamped& finish_pose)
 {
+  if (!fs::exists(fs::path(filename_)))
+  {
+    fs::create_directories(fs::path(filename_).parent_path());
+  }
   std::ofstream ofs(filename_.c_str(), std::ios::out);
   /*
   waypoints:
@@ -233,11 +237,16 @@ void WaypointsSaver::copyToSrc()
   fs::path copy_path = pkg_parent / under_pkg;
   try
   {
+    if (!fs::exists(copy_path.parent_path()))
+    {
+      fs::create_directories(copy_path.parent_path());
+    }
     fs::copy(fs::path(filename_), copy_path, fs::copy_options::overwrite_existing);
     RCLCPP_INFO_STREAM(this->get_logger(), "Copied at " << copy_path.string());
   }
   catch (const fs::filesystem_error& e)
   {
+    RCLCPP_ERROR(this->get_logger(), e.what());
     throw std::runtime_error("Failed to copy from" + filename_ + " to " + copy_path.string());
   }
 }

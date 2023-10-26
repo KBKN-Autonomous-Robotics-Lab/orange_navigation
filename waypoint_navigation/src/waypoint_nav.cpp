@@ -89,7 +89,6 @@ bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::
       conv_x = (compare_wp->x - init_x) * cos(-init_yaw) - (compare_wp->y - init_y) * sin(-init_yaw);
       if ((dist_wp < min_dist_wp) && (std::abs(dir_wp - init_yaw) < yaw_thresh) && (conv_x > 0))
       {
-        RCLCPP_INFO(this->get_logger(), "%ld, %f, %f, %f", i, dist_wp, std::abs(dir_wp - init_yaw), conv_x);
         min_dist_wp = dist_wp;
         current_wp_ = pose_array_.poses.begin() + i;
         wp_num_ = i + 1;

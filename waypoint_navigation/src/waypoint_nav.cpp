@@ -8,11 +8,13 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0),
   this->declare_parameter<std::string>("robot_frame", "base_footprint");
   this->declare_parameter<float>("min_dist_err", 0.3);
   this->declare_parameter<float>("min_yaw_err", 0.3);
+  this->declare_parameter<bool>("start_from_middle", false);
 
   this->get_parameter("world_frame", world_frame_);
   this->get_parameter("robot_frame", robot_frame_);
   this->get_parameter("min_dist_err", min_dist_err_);
   this->get_parameter("min_yaw_err", min_yaw_err_);
+  this->get_parameter("start_from_middle", start_from_mid_);
 
   // Load YAML file
   std::string waypoints_file = "";
@@ -30,6 +32,8 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0),
   wp_num_pub_ = this->create_publisher<std_msgs::msg::UInt16>("waypoint_num", 10);
   cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
       "cmd_vel", 1, std::bind(&WaypointsNavigation::cmdVelCallback, this, _1));
+  init_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "initialpose", 1, std::bind(&WaypointsNavigation::initPoseCallback, this, _1));
 
   // Service
   start_server_ = create_service<std_srvs::srv::Trigger>(
@@ -62,9 +66,47 @@ bool WaypointsNavigation::startNavCallback(const std::shared_ptr<std_srvs::srv::
     response->success = false;
     return false;
   }
-  RCLCPP_INFO(this->get_logger(), "Navigation is started now");
   wp_num_ = 1;
   current_wp_ = pose_array_.poses.begin();
+
+  if (start_from_mid_)
+  {
+    // Find a waypoint that is closest to robot and match the direction
+    auto compare_wp = waypoint_list_.begin();
+    double init_x = current_pose_.position.x;
+    double init_y = current_pose_.position.y;
+    double init_yaw = getYaw(current_pose_.orientation);
+    double min_dist_wp = DBL_MAX;
+    double yaw_thresh = M_PI / 2;
+    double pre_wp_x = 0, pre_wp_y = 0;
+    double dist_wp, dir_wp, conv_x;
+    size_t num_wp = waypoint_list_.size();
+    size_t i = 0;
+    for (i = 0; i < num_wp; i++)
+    {
+      dist_wp = std::sqrt(std::pow(compare_wp->x - init_x, 2) + std::pow(compare_wp->y - init_y, 2));
+      dir_wp = std::atan2(compare_wp->y - pre_wp_y, compare_wp->x - pre_wp_x);
+      conv_x = (compare_wp->x - init_x) * cos(-init_yaw) - (compare_wp->y - init_y) * sin(-init_yaw);
+      if ((dist_wp < min_dist_wp) && (std::abs(dir_wp - init_yaw) < yaw_thresh) && (conv_x > 0))
+      {
+        min_dist_wp = dist_wp;
+        current_wp_ = pose_array_.poses.begin() + i;
+        wp_num_ = i + 1;
+      }
+      pre_wp_x = compare_wp->x;
+      pre_wp_y = compare_wp->y;
+      compare_wp++;
+    }
+    if (min_dist_wp == DBL_MAX)
+    {
+      RCLCPP_WARN(this->get_logger(), "Could not find the closest appropriate waypoint");
+      response->success = false;
+      return false;
+    }
+  }
+
+  // Send first goal
+  RCLCPP_INFO(this->get_logger(), "Navigation is started now");
   sendGoal(*current_wp_);
   response->success = true;
   has_activate_ = true;
@@ -116,6 +158,14 @@ void WaypointsNavigation::cmdVelCallback(const geometry_msgs::msg::Twist::Shared
   }
   else
     last_move_time_ = now().seconds();
+}
+
+void WaypointsNavigation::initPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
+{
+  if (!start_from_mid_)
+    RCLCPP_WARN(this->get_logger(), "Are you sure the parameter \"start_from_middle\" is false?");
+  RCLCPP_INFO_STREAM(this->get_logger(), "Initial pose is set");
+  current_pose_ = msg->pose.pose;
 }
 
 void WaypointsNavigation::responseCallback(const GoalHandleNavToPose::SharedPtr& future)
@@ -291,16 +341,21 @@ bool WaypointsNavigation::onNavPoint(const geometry_msgs::msg::Pose& goal_pose)
   float dist_err = waypoint_list_[wp_num_ - 1].rad;
   if (waypoint_list_[wp_num_ - 1].stop)
   {
-    tf2::Quaternion tf2_quat;
-    tf2::fromMsg(robot_pose.orientation, tf2_quat);
-    tf2::Matrix3x3 m(tf2_quat);
-    double r, p, robot_yaw;
-    m.getRPY(r, p, robot_yaw);
-    double yaw_diff = std::abs(target_yaw_ - robot_yaw);
+    double yaw_diff = std::abs(target_yaw_ - getYaw(robot_pose.orientation));
     return ((dist < min_dist_err_) && (yaw_diff < min_yaw_err_)) ||
            (nav_status_ == rclcpp_action::ResultCode::SUCCEEDED);
   }
   return dist < dist_err;
+}
+
+double WaypointsNavigation::getYaw(const geometry_msgs::msg::Quaternion& orientation)
+{
+  tf2::Quaternion tf2_quat;
+  tf2::fromMsg(orientation, tf2_quat);
+  tf2::Matrix3x3 m(tf2_quat);
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+  return yaw;
 }
 
 void WaypointsNavigation::execLoop()

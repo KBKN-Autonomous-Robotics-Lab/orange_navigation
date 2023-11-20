@@ -374,7 +374,7 @@ void WaypointsNavigation::execLoop()
 
   // If no movement for certain period of time after sending goal
   double t = now().seconds();
-  if ((t - start_nav_time_ > 10) && (t - last_move_time_ > 10))
+  if ((t - start_nav_time_ > 5) && (t - last_move_time_ > 5))
   {
     RCLCPP_WARN(this->get_logger(), "Resend current goal");
     clearCostmap();

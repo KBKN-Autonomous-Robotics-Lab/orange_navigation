@@ -48,6 +48,7 @@ private:
   uint16_t wp_num_;
   double last_move_time_, start_nav_time_;
   float target_yaw_, min_dist_err_, min_yaw_err_;
+  float timeout_restart_nav_;
   bool has_activate_, start_from_mid_;
 
   // Service callback functions

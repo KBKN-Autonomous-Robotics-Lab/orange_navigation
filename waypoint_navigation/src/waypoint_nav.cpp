@@ -8,12 +8,14 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0),
   this->declare_parameter<std::string>("robot_frame", "base_footprint");
   this->declare_parameter<float>("min_dist_err", 0.3);
   this->declare_parameter<float>("min_yaw_err", 0.3);
+  this->declare_parameter<float>("timeout_restart_nav", 5);
   this->declare_parameter<bool>("start_from_middle", false);
 
   this->get_parameter("world_frame", world_frame_);
   this->get_parameter("robot_frame", robot_frame_);
   this->get_parameter("min_dist_err", min_dist_err_);
   this->get_parameter("min_yaw_err", min_yaw_err_);
+  this->get_parameter("timeout_restart_nav", timeout_restart_nav_);
   this->get_parameter("start_from_middle", start_from_mid_);
 
   // Load YAML file
@@ -374,7 +376,7 @@ void WaypointsNavigation::execLoop()
 
   // If no movement for certain period of time after sending goal
   double t = now().seconds();
-  if ((t - start_nav_time_ > 5) && (t - last_move_time_ > 5))
+  if ((t - start_nav_time_ > timeout_restart_nav_) && (t - last_move_time_ > timeout_restart_nav_))
   {
     RCLCPP_WARN(this->get_logger(), "Resend current goal");
     clearCostmap();

@@ -8,7 +8,7 @@ WaypointsNavigation::WaypointsNavigation() : Node("waypoint_nav"), nav_time_(0),
   this->declare_parameter<std::string>("robot_frame", "base_footprint");
   this->declare_parameter<float>("min_dist_err", 0.3);
   this->declare_parameter<float>("min_yaw_err", 0.3);
-  this->declare_parameter<float>("timeout_restart_nav", 5);
+  this->declare_parameter<float>("timeout_restart_nav", 5.0);
   this->declare_parameter<bool>("start_from_middle", false);
 
   this->get_parameter("world_frame", world_frame_);

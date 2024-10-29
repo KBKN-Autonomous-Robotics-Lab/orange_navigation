@@ -1079,6 +1079,12 @@ class Application(tk.Frame):
                 point[key] = y
             elif key == "z":
                 point[key] = 0.0
+            elif key == "vel":
+                point[key] = 1.0
+            elif key == "rad":
+                point[key] = 1.0
+            elif key == "stop":
+                point[key] = "false"
             else:
                 point[key] = ""
         id = self.create_waypoint(point)
